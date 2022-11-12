@@ -5,7 +5,7 @@ class NotAValidNumberOfSwitches(Exception):
     pass
 
 class MyTopo(Topo):
-    def __init__(self, number_of_switches : int):
+    def __init__(self, number_of_switches):
         # Initialize topology
         Topo.__init__(self)
 
@@ -28,7 +28,7 @@ class MyTopo(Topo):
         if number_of_switches == 1:
             s2 = s1
         else:
-            for i in range(number_of_switches):
+            for i in range(1, number_of_switches):
                 s2 = self.addSwitch('switch_'+str(i))
                 self.addLink(s1,s2)
                 s1 = s2
