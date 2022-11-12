@@ -1,16 +1,16 @@
 from mininet.topo import Topo
 
 
-class NotAValidNumberOfSwitches(Exception):
+class InvalidNumberOfSwitches(Exception):
     pass
 
-class MyTopo(Topo):
+class ChainTopo(Topo):
     def __init__(self, number_of_switches):
         # Initialize topology
         Topo.__init__(self)
 
         if number_of_switches < 1:
-            raise NotAValidNumberOfSwitches(str(number_of_switches) + " is not a valid number")
+            raise InvalidNumberOfSwitches(str(number_of_switches) + " is not a valid number")
         
 
         # Create hosts
@@ -38,4 +38,4 @@ class MyTopo(Topo):
         self.addLink(s2,h4)
 
 
-topos = {'customTopology': MyTopo}
+topos = {'chain': ChainTopo}
