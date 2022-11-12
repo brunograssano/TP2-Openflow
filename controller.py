@@ -7,6 +7,8 @@ from collections import namedtuple
 import os
 
 # Add your imports here ...
+from pox.lib.addresses import IPAddr
+
 log = core.getLogger()
 
 # Add your global variables here ...
@@ -18,8 +20,14 @@ class Firewall(EventMixin) :
     
     def _handle_ConnectionUp(self, event):
         # Add your logic here ...
+        my_match = of.ofp_match()
+        my_match.nw_dst = IPAddr("10.00.00.01")
+        my_match.tp_dst = 80
 
+        msg = of.ofp_flow_mod()
+        msg.match = my_match
 
+        event.connection.send(msg)
 
         log.debug("Firewall rules installed on %s", dpidToStr(event.dpid))
 
