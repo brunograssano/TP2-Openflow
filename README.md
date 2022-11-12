@@ -1,5 +1,11 @@
 # TP2-Openflow
 
+### Ejecutando
+
+Corriendo la topologia:
+``` sh
+sudo mn --custom ./topology.py --topo chain,number_of_switches=2
+```
 
 ### Dependencias
 
