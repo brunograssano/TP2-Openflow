@@ -7,7 +7,7 @@ from collections import namedtuple
 import os
 
 # Add your imports here ...
-log = core . getLogger ()
+log = core.getLogger()
 
 # Add your global variables here ...
 
@@ -18,8 +18,12 @@ class Firewall(EventMixin) :
     
     def _handle_ConnectionUp(self, event):
         # Add your logic here ...
-        log.debug("Enabling Firewall Module")
 
-    def launch():
-        # Starting the Firewall module
-        core.registerNew(Firewall)
+
+
+        log.debug("Firewall rules installed on %s", dpidToStr(event.dpid))
+
+
+def launch():
+    # Starting the Firewall module
+    core.registerNew(Firewall)
