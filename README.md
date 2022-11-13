@@ -2,9 +2,15 @@
 
 ### Ejecutando
 
+Primero ejecutar el controlador:
+
+``` sh
+python3 pox.py log.level --DEBUG openflow.of_01 forwarding.l2_learning controller
+```
+
 Corriendo la topologia:
 ``` sh
-sudo mn --custom ./topology.py --topo chain,number_of_switches=2
+sudo mn --custom ./topology.py --topo chain,number_of_switches=2 --mac --arp --switch ovsk --controller remote
 ```
 
 ### Dependencias
