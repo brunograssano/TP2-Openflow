@@ -5,6 +5,7 @@ from pox.lib.util import dpidToStr
 from pox.lib.addresses import EthAddr
 from collections import namedtuple
 import os
+import json
 
 # Add your imports here ...
 from pox.lib.addresses import IPAddr
@@ -18,13 +19,16 @@ IP = 0x0800
 class Firewall(EventMixin) :
     def __init__ ( self ) :
         self.listenTo(core.openflow)
+        config = self.read_config("rules.json")
+        self.firewall_switch = config["firewall_switch"]
         log.debug("Enabling Firewall Module")
     
     def _handle_ConnectionUp(self, event):
-        self.block_port(event, 80)
-        self.block_by(event, "10.0.0.1", 5001, "UDP")
-        self.block_communication_between(event, "10.0.0.2", "10.0.0.3")
-        log.debug("Firewall rules installed on %s", dpidToStr(event.dpid))
+        if event.dpid == self.firewall_switch:
+            self.block_port(event, 80)
+            self.block_by(event, "10.0.0.1", 5001, "TCP")
+            self.block_communication_between(event, "10.0.0.2", "10.0.0.3")
+            log.debug("Firewall rules installed on %s", dpidToStr(event.dpid))
 
     def block_port(self, event, port):
         ''' Blocks all incoming packets to `port` number '''
@@ -86,6 +90,11 @@ class Firewall(EventMixin) :
 
         log.debug("Firewall block communication with %s and %s rule installed on %s", host1, host2, dpidToStr(event.dpid))
 
+    def read_config(self, config_file):
+        f = open (config_file, "r")
+        config = json.loads(f.read())
+        f.close()
+        return config
 
 def launch():
     # Starting the Firewall module
