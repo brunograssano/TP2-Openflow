@@ -47,10 +47,10 @@ class Firewall(EventMixin) :
             if "ipv6" == rule["ip_type"]:
                 block_match.dl_type = pkt.ethernet.IPV6_TYPE
         if "mac" in rule:
-            if "src" in rule:
-                block_match.dl_src = EthAddr(rule["src"])
-            if "dst" in rule:
-                block_match.dl_src = EthAddr(rule["dst"])
+            if "src" in rule["mac"]:
+                block_match.dl_src = EthAddr(rule["mac"]["src"])
+            if "dst" in rule["mac"]:
+                block_match.dl_src = EthAddr(rule["mac"]["dst"])
 
     def add_network_rule(self, rule, block_match):
         network_protocols = {
