@@ -5,87 +5,79 @@ from pox.lib.util import dpidToStr
 from pox.lib.addresses import EthAddr
 from collections import namedtuple
 import os
+import json
 
-# Add your imports here ...
 from pox.lib.addresses import IPAddr
 import pox.lib.packet as pkt
 
 log = core.getLogger()
 
-# Add your global variables here ...
-IP = 0x0800
-
 class Firewall(EventMixin) :
     def __init__ ( self ) :
         self.listenTo(core.openflow)
+        config = self.read_config("rules.json")
+        self.firewall_switch = config["firewall_switch"]
+        self.rules = config["rules"]
         log.debug("Enabling Firewall Module")
     
     def _handle_ConnectionUp(self, event):
-        self.block_port(event, 80)
-        self.block_by(event, "10.0.0.1", 5001, "UDP")
-        self.block_communication_between(event, "10.0.0.2", "10.0.0.3")
-        log.debug("Firewall rules installed on %s", dpidToStr(event.dpid))
+        if event.dpid == self.firewall_switch:
+            for rule in self.rules:
+                self.add_rule(event, rule["rule"])
+                log.debug("Firewall rule: %s installed on switch %s", rule["name"], dpidToStr(event.dpid))
 
-    def block_port(self, event, port):
-        ''' Blocks all incoming packets to `port` number '''
+    def add_rule(self, event, rule):
+        block_match = of.ofp_match()
 
-        # Mathes incoming packets that has port as port destination
-        portMatch = of.ofp_match()
-        portMatch.dl_type = IP
-        portMatch.nw_proto = pkt.ipv4.TCP_PROTOCOL
-        portMatch.tp_dst = port
-
-        # Changes routing table so that those packets are dropped
-        msg = of.ofp_flow_mod()
-        msg.match = portMatch
-        event.connection.send(msg)
-
-        portMatch = of.ofp_match()
-        portMatch.dl_type = IP
-        portMatch.nw_proto = pkt.ipv4.UDP_PROTOCOL
-        portMatch.tp_dst = port
+        if "data_link" in rule:
+            self.add_data_link_rule(rule["data_link"], block_match)
+        if "network" in rule:
+            self.add_network_rule(rule["network"], block_match)
+        if "transport" in rule:
+            self.add_transport_rule(rule["transport"], block_match)
 
         msg = of.ofp_flow_mod()
-        msg.match = portMatch
+        msg.match = block_match
         event.connection.send(msg)
 
-        log.debug("Firewall block port %d rule installed on %s", port, dpidToStr(event.dpid))
+    def add_data_link_rule(self, rule, block_match):
+        if "ip_type" in rule:
+            if "ipv4" == rule["ip_type"]:
+                block_match.dl_type = pkt.ethernet.IP_TYPE
+            if "ipv6" == rule["ip_type"]:
+                block_match.dl_type = pkt.ethernet.IPV6_TYPE
+        if "mac" in rule:
+            if "src" in rule:
+                block_match.dl_src = EthAddr(rule["src"])
+            if "dst" in rule:
+                block_match.dl_src = EthAddr(rule["dst"])
 
-    def block_by(self, event, host, to_port, with_protocol):
-        ''' Blocks all incoming packets from `host` to `port` number `with_protocol` '''
+    def add_network_rule(self, rule, block_match):
+        network_protocols = {
+            "tcp": pkt.ipv4.TCP_PROTOCOL,
+            "udp": pkt.ipv4.UDP_PROTOCOL,
+            "icmp": pkt.ipv4.ICMP_PROTOCOL,
+        }
+        selected = rule["protocol"]
+        if selected in network_protocols:
+            block_match.nw_proto = network_protocols[selected]
 
-        hostToPortWithProtocolMatch = of.ofp_match()
-        hostToPortWithProtocolMatch.dl_type = IP
-        hostToPortWithProtocolMatch.nw_src = IPAddr(host)
-        hostToPortWithProtocolMatch.tp_dst = to_port
-        hostToPortWithProtocolMatch.nw_proto = pkt.ipv4.TCP_PROTOCOL if with_protocol == "TCP" else pkt.IPV4.UDP_PROTOCOL
+        if "src_ip" in rule:
+            block_match.nw_src = IPAddr(rule["src_ip"])
+        if "dst_ip" in rule:
+            block_match.nw_dst = IPAddr(rule["dst_ip"])
 
-        msg = of.ofp_flow_mod()
-        msg.match = hostToPortWithProtocolMatch
-        event.connection.send(msg)
+    def add_transport_rule(self, rule, block_match):
+        if "src_port" in rule:
+            block_match.tp_src = rule["src_port"]
+        if "dst_port" in rule:
+            block_match.tp_dst = rule["dst_port"]
 
-        log.debug("Firewall block host %s to port %d with protocol %s rule installed on %s", host, to_port, with_protocol, dpidToStr(event.dpid))
-
-    def block_communication_between(self, event, host1, host2):
-        ''' Blocks all communication packets between `host1` and `host2` '''
-
-        host1ToHost2Match = of.ofp_match()
-        host1ToHost2Match.dl_type = IP
-        host1ToHost2Match.nw_src = IPAddr(host1)
-        host1ToHost2Match.nw_dst = IPAddr(host2)
-
-        msg = of.ofp_flow_mod()
-        msg.match = host1ToHost2Match
-        event.connection.send(msg)
-
-        host2ToHost1Match = host1ToHost2Match.flip()
-
-        msg = of.ofp_flow_mod()
-        msg.match = host2ToHost1Match
-        event.connection.send(msg)
-
-        log.debug("Firewall block communication with %s and %s rule installed on %s", host1, host2, dpidToStr(event.dpid))
-
+    def read_config(self, config_file):
+        f = open (config_file, "r")
+        config = json.loads(f.read())
+        f.close()
+        return config
 
 def launch():
     # Starting the Firewall module

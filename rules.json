@@ -1,0 +1,70 @@
+{
+    "firewall_switch" : 1,
+    "rules": [
+        {
+            "name": "Block TCP port 80",
+            "rule": {
+                "data_link": {
+                    "ip_type": "ipv4"
+                },
+                "network": {
+                    "protocol": "tcp"
+                },
+                "transport": {
+                    "dst_port": 80
+                }
+            }
+        },
+        {
+            "name": "Block UDP port 80",
+            "rule": {
+                "data_link": {
+                    "ip_type": "ipv4"
+                },
+                "network": {
+                    "protocol": "udp"
+                },
+                "transport": {
+                    "dst_port": 80
+                }
+            }
+        },
+        {
+            "name": "Block UDP packages from 10.0.0.1 to any host port 5001",
+            "rule": {
+                "data_link": {
+                    "ip_type": "ipv4"
+                },
+                "network": {
+                    "protocol": "udp",
+                    "src_ip": "10.0.0.1"
+                },
+                "transport": {
+                    "dst_port": 5001
+                }
+            }
+        },
+        {
+            "name": "Block any communication between host_2 to host_3",
+            "rule": {
+                "data_link": {
+                    "mac": {
+                        "src": "00:00:00:00:00:02",
+                        "dst": "00:00:00:00:00:03"
+                    }
+                }
+            }
+        },
+        {
+            "name": "Block any communication between host_3 to host_2",
+            "rule": {
+                "data_link": {
+                    "mac": {
+                        "src": "00:00:00:00:00:03",
+                        "dst": "00:00:00:00:00:02"
+                    }
+                }
+            }
+        }
+    ]
+}

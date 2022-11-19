@@ -20,7 +20,7 @@ class ChainTopo(Topo):
         h4 = self.addHost('host_4')
 
         # Create switches and add relationship with first hosts
-        s1 = self.addSwitch('switch_0')
+        s1 = self.addSwitch('switch_1')
         self.addLink(s1,h1)
         self.addLink(s1,h2)
 
@@ -28,7 +28,7 @@ class ChainTopo(Topo):
         if number_of_switches == 1:
             s2 = s1
         else:
-            for i in range(1, number_of_switches):
+            for i in range(2, number_of_switches + 1):
                 s2 = self.addSwitch('switch_'+str(i))
                 self.addLink(s1,s2)
                 s1 = s2
