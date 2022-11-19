@@ -50,7 +50,7 @@ class Firewall(EventMixin) :
             if "src" in rule["mac"]:
                 block_match.dl_src = EthAddr(rule["mac"]["src"])
             if "dst" in rule["mac"]:
-                block_match.dl_src = EthAddr(rule["mac"]["dst"])
+                block_match.dl_dst = EthAddr(rule["mac"]["dst"])
 
     def add_network_rule(self, rule, block_match):
         network_protocols = {
